@@ -17,3 +17,9 @@
 # limitations under the License.
 
 Chef::Log.info "It works!"
+
+require 'json'
+
+File.open('/tmp/hoge.json', 'w') { |f|
+  f.print node.to_json
+}
