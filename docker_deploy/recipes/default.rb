@@ -23,3 +23,12 @@ require 'json'
 File.open('/tmp/hoge.json', 'w') { |f|
   f.print node.to_json
 }
+
+node['deploy'].each do |application, deploy|
+  Chef::Log.info "Start deploying #{application}..."
+
+  image = deploy['docker_image'] || application
+  docker_image image do
+    tag deploy['docker_tag'] || 'latest'
+  end
+end
