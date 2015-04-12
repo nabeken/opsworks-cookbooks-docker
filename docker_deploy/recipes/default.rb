@@ -29,6 +29,8 @@ node['deploy'].each do |application, deploy|
 
   image = deploy['docker_image'] || application
   docker_image image do
-    tag deploy['docker_tag'] || 'latest'
+    if deploy['docker_tag']
+      tag deploy['docker_tag']
+    end
   end
 end
