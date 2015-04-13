@@ -17,8 +17,7 @@
 # limitations under the License.
 
 require 'json'
-
-::Chef::Recipe.send(:include, Docker::Helpers)
+require 'chef/mixin/shell_out'
 
 include_recipe 'deploy'
 
@@ -39,22 +38,24 @@ node['deploy'].each do |application, deploy|
     path deploy['deploy_to']
   end
 
+  cur = "#{deploy['deploy_to']}/current"
+
   docker_image deploy['docker']['image'] do
     tag deploy['docker']['tag']
-    notifies :redeploy, "docker_container[#{application}]"
+    notifies :create, "file[#{cur}/id]"
   end
 
-  cur = "#{deploy['deploy_to']}/current"
   directory cur do
     user deploy['user']
     group deploy['group']
   end
 
-  image_id = docker_cmd("inspect -f '{{.Id}}' #{deploy['docker']['image']}:#{deploy['docker']['tag']}", 60).stdout
   file "#{cur}/id" do
     user deploy['user']
     group deploy['group']
-    content image_id
+    content lazy {
+      Chef::Mixin::ShellOut.shell_out("docker inspect -f '{{.Id}}' #{deploy['docker']['image']}:#{deploy['docker']['tag']}", :timeout => 60).stdout
+    }
     notifies :redeploy, "docker_container[#{application}]"
   end
 
@@ -70,7 +71,7 @@ node['deploy'].each do |application, deploy|
   end
 
   docker_container application do
-    image image_id
+    image lazy { ::File.open("#{cur}/id") { |f| f.read.strip } }
     container_name application
     action :run
     detach true
