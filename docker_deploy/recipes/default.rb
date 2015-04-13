@@ -16,21 +16,71 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-Chef::Log.info "It works!"
-
 require 'json'
 
-File.open('/tmp/hoge.json', 'w') { |f|
-  f.print node.to_json
-}
+::Chef::Recipe.send(:include, Docker::Helpers)
+
+include_recipe 'deploy'
+
+file '/tmp/node.json' do
+  user 'root'
+  owner 'root'
+  mode '0600'
+  backup false
+  content JSON.pretty_generate(node)
+end
 
 node['deploy'].each do |application, deploy|
   Chef::Log.info "Start deploying #{application}..."
 
-  image = deploy['docker_image'] || application
-  docker_image image do
-    if deploy['docker_tag']
-      tag deploy['docker_tag']
+  opsworks_deploy_dir do
+    user deploy['user']
+    group deploy['group']
+    path deploy['deploy_to']
+  end
+
+  docker_image deploy['docker']['image'] do
+    tag deploy['docker']['tag']
+    notifies :redeploy, "docker_container[#{application}]"
+  end
+
+  cur = "#{deploy['deploy_to']}/current"
+  directory cur do
+    user deploy['user']
+    group deploy['group']
+  end
+
+  image_id = docker_cmd("inspect -f '{{.Id}}' #{deploy['docker']['image']}:#{deploy['docker']['tag']}", 60).stdout
+  file "#{cur}/id" do
+    user deploy['user']
+    group deploy['group']
+    content image_id
+    notifies :redeploy, "docker_container[#{application}]"
+  end
+
+  template "#{cur}/env" do
+    user deploy['user']
+    group deploy['group']
+    mode '0600'
+    action :create
+    backup false
+    source 'envfile.erb'
+    variables :env => deploy['environment']
+    notifies :redeploy, "docker_container[#{application}]"
+  end
+
+  docker_container application do
+    image image_id
+    container_name application
+    action :run
+    detach true
+    env_file "#{cur}/env"
+    if deploy['docker']['cmd']
+      command deploy['docker']['cmd']
+    end
+
+    if deploy['docker']['net']
+      net deploy['docker']['net']
     end
   end
 end

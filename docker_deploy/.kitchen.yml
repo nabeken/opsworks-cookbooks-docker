@@ -6,11 +6,24 @@ provisioner:
   name: chef_zero
 
 platforms:
-  - name: ubuntu-12.04
-  - name: centos-6.5
+  - name: ubuntu-14.04
+    run_list:
+      - recipe[docker]
+    attributes:
+      opsworks:
+        instance:
+          infrastructure_class: ec2
 
 suites:
   - name: default
     run_list:
       - recipe[docker_deploy::default]
     attributes:
+      deploy:
+        nginx:
+          docker:
+            image: nginx
+            tag: latest
+            net: host
+          environment:
+            TEST_ENV: HOGE
