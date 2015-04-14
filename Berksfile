@@ -25,6 +25,4 @@ if ENV['NO_OPSWORKS']
       cookbook c, git: opsworks_repo, branch: opsworks_branch, rel: c
     end
   end
-else
-  cookbook 'deploy', path: '/opt/aws/opsworks/current/cookbooks/deploy'
 end
