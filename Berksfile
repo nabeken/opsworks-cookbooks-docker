@@ -1,9 +1,8 @@
 source "https://supermarket.chef.io"
 
-metadata
-
 # just a dirty hack..
 if ENV['NO_OPSWORKS']
+  metadata
   group :kitchen do
     opsworks_repo = 'https://github.com/aws/opsworks-cookbooks.git'
     opsworks_branch = 'release-chef-11.10'
