@@ -21,14 +21,6 @@ require 'chef/mixin/shell_out'
 
 include_recipe 'deploy'
 
-file '/tmp/node.json' do
-  user 'root'
-  owner 'root'
-  mode '0600'
-  backup false
-  content JSON.pretty_generate(node)
-end
-
 node['deploy'].each do |application, deploy|
   Chef::Log.info "Start deploying #{application}..."
 
