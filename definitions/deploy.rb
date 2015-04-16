@@ -34,14 +34,15 @@ define :docker_deploy do
 
   cur = "#{deploy['deploy_to']}/current"
 
-  docker_image container_data['image'] do
-    tag container_data['tag']
-    notifies :create, "file[#{cur}/id]"
-  end
-
   directory cur do
     user deploy['user']
     group deploy['group']
+  end
+
+  docker_image container_data['image'] do
+    tag container_data['tag']
+    notifies :create, "file[#{cur}/id]"
+    only_if { opsworks['activity'] == 'deploy' }
   end
 
   file "#{cur}/id" do
@@ -50,7 +51,10 @@ define :docker_deploy do
     content lazy {
       Chef::Mixin::ShellOut.shell_out("docker inspect -f '{{.Id}}' #{container_data['image']}:#{container_data['tag']}", :timeout => 60).stdout
     }
-    notifies :redeploy, "docker_container[#{application}]"
+
+    if opsworks['activity'] == 'deploy'
+      notifies :redeploy, "docker_container[#{application}]"
+    end
   end
 
   template "#{cur}/env" do
@@ -62,7 +66,10 @@ define :docker_deploy do
     source 'envfile.erb'
     variables :env => deploy['environment']
     cookbook 'docker_deploy'
-    notifies :redeploy, "docker_container[#{application}]"
+
+    if opsworks['action'] == 'deploy'
+      notifies :redeploy, "docker_container[#{application}]"
+    end
   end
 
   docker_container application do
