@@ -61,6 +61,7 @@ define :docker_deploy do
     backup false
     source 'envfile.erb'
     variables :env => deploy['environment']
+    cookbook 'docker_deploy'
     notifies :redeploy, "docker_container[#{application}]"
   end
 
