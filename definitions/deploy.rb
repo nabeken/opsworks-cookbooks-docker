@@ -24,7 +24,7 @@ define :docker_deploy do
 
   container_data = params[:container_data]
 
-  Chef::Log.info "Start deploying #{application}..."
+  Chef::Log.info "Start deploying #{application} in #{opsworks['activity']} phase..."
 
   opsworks_deploy_dir do
     user deploy['user']
@@ -42,7 +42,10 @@ define :docker_deploy do
   docker_image container_data['image'] do
     tag container_data['tag']
     notifies :create, "file[#{cur}/id]"
-    only_if { opsworks['activity'] == 'deploy' }
+
+    only_if {
+      opsworks['activity'] == 'setup' || opsworks['activity'] == 'deploy'
+    }
   end
 
   file "#{cur}/id" do
@@ -52,7 +55,7 @@ define :docker_deploy do
       Chef::Mixin::ShellOut.shell_out("docker inspect -f '{{.Id}}' #{container_data['image']}:#{container_data['tag']}", :timeout => 60).stdout
     }
 
-    if opsworks['activity'] == 'deploy'
+    if opsworks['activity'] == 'setup' || opsworks['activity'] == 'deploy'
       notifies :redeploy, "docker_container[#{application}]"
     end
   end
@@ -67,7 +70,7 @@ define :docker_deploy do
     variables :env => deploy['environment']
     cookbook 'docker_deploy'
 
-    if opsworks['action'] == 'deploy'
+    if opsworks['action'] == 'setup' || opsworks['action'] == 'deploy'
       notifies :redeploy, "docker_container[#{application}]"
     end
   end
@@ -77,7 +80,7 @@ define :docker_deploy do
     container_name application
 
     case opsworks['activity']
-    when 'deploy'
+    when 'setup', 'deploy'
       action :run
     when 'undeploy'
       action [:stop, :remove]
