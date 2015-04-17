@@ -81,7 +81,8 @@ define :docker_deploy do
 
     case opsworks['activity']
     when 'setup', 'deploy'
-      action :run
+      # something is wrong with [:redeploy, :run] so just redeploy here
+      action :redeploy
     when 'undeploy'
       action [:stop, :remove]
     end
