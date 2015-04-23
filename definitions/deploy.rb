@@ -75,6 +75,26 @@ define :docker_deploy do
     end
   end
 
+  if deploy['ssl_support']
+    file "#{cur}/cert.pem" do
+      user deploy['user']
+      group deploy['group']
+      mode '0600'
+      backup false
+      action :create
+      content deploy['ssl_certificate']
+    end
+
+    file "#{cur}/cert.key" do
+      user deploy['user']
+      group deploy['group']
+      mode '0600'
+      backup false
+      action :create
+      content deploy['ssl_certificate_key']
+    end
+  end
+
   docker_container application do
     image lazy { ::File.open("#{cur}/id") { |f| f.read.strip } }
     container_name application
@@ -95,6 +115,15 @@ define :docker_deploy do
 
     if container_data['net']
       net container_data['net']
+    end
+
+    if deploy['ssl_support']
+      ENV['TLS_CERT'] = deploy['ssl_certificate']
+      ENV['TLS_CERT_KEY'] = deploy['ssl_certificate_key']
+      env %w{
+        TLS_CERT
+        TLS_CERT_KEY
+      }
     end
   end
 end
