@@ -29,10 +29,10 @@ define :docker_deploy do
   opsworks_deploy_dir do
     user deploy['user']
     group deploy['group']
-    path deploy['deploy_to']
+    path "/srv/www/#{application}"
   end
 
-  cur = "#{deploy['deploy_to']}/current"
+  cur = "/srv/www/#{application}/current"
 
   directory cur do
     user deploy['user']
