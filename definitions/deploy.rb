@@ -117,6 +117,10 @@ define :docker_deploy do
       net container_data['net']
     end
 
+    if container_data['link']
+      link container_data['link']
+    end
+
     if deploy['ssl_support']
       ENV['TLS_CERT'] = deploy['ssl_certificate']
       ENV['TLS_CERT_KEY'] = deploy['ssl_certificate_key']
