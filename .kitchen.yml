@@ -1,6 +1,20 @@
 ---
+#<% require 'kitchen-sync' %>
 driver:
-  name: vagrant
+  name: ec2
+  subnet_id: <%= ENV['AWS_SUBNET_ID'] %>
+  aws_ssh_key_id: <%= ENV['AWS_SSH_KEY_ID'] %>
+  region: <%= ENV['AWS_DEFAULT_REGION'] %>
+  availability_zone: a
+  instance_type: c3.large
+  require_chef_omnibus: true
+  security_group_ids:
+    - <%= ENV['AWS_SG_ID'] %>
+
+transport:
+  name: sftp
+  ssh_key: <%= ENV['AWS_SSH_KEY'] %>
+  username: ubuntu
 
 provisioner:
   name: chef_zero
@@ -8,22 +22,32 @@ provisioner:
 platforms:
   - name: ubuntu-14.04
     run_list:
-      - recipe[docker]
+      - recipe[apt]
+      - recipe[docker_deploy_test::install_docker]
+      - recipe[golang]
+    driver:
+      image_id: ami-fc11d4fc
     attributes:
+      go:
+        version: 1.4.2
       opsworks:
         instance:
           infrastructure_class: ec2
+        activity: setup
 
 suites:
   - name: default
     run_list:
-      - recipe[docker_deploy::default]
+      - recipe[docker_deploy_test]
     attributes:
+      docker_deploy_test:
+        docker:
+          image: nginx
+          tag: latest
+          net: host
       deploy:
         nginx:
-          docker:
-            image: nginx
-            tag: latest
-            net: host
+          application: nginx
+          application_type: other
           environment:
             TEST_ENV: HOGE
