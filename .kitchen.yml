@@ -39,12 +39,16 @@ suites:
     attributes:
       docker_deploy_test:
         docker:
-          image: nginx
+          image: nabeken/go-api-now
           tag: latest
           net: host
+          cmd: app
       deploy:
-        nginx:
-          application: nginx
+        api:
+          application: api
           application_type: other
           environment:
+            PORT: 80
             TEST_ENV: HOGE
+            TEST_ENV_2: HOGE_2
+            TEST_ENV_3: HOGE_3

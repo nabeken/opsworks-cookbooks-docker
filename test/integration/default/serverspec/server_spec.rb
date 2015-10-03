@@ -4,10 +4,16 @@ describe port(80) do
   it { should be_listening }
 end
 
-describe docker_container('nginx') do
-  its(['Path']) { should eq 'nginx' }
-  its(['Args']) { should eq ['-g', 'daemon off;'] }
-  its(['Config.Env']) { should include 'TEST_ENV=HOGE' }
+describe docker_container('api') do
+  its(['Path']) { should eq 'app' }
+
+  %w{
+    PORT=80
+    TEST_ENV=HOGE
+    TEST_ENV_2=HOGE_2
+  }.each do |env|
+    its(['Config.Env']) { should include env }
+  end
   it { should exist }
   it { should be_running }
 end

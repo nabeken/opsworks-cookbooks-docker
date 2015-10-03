@@ -6,4 +6,4 @@ description      'Installs/Configures docker_deploy'
 long_description 'Installs/Configures docker_deploy'
 version          '0.2.0'
 
-depends 'docker'
+depends 'docker', '~> 1.0'

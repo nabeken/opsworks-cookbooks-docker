@@ -16,6 +16,7 @@
 # limitations under the License.
 
 require 'chef/mixin/shell_out'
+extend Chef::Mixin::ShellOut
 
 define :docker_deploy do
   application = params[:name]
@@ -40,26 +41,16 @@ define :docker_deploy do
   end
 
   docker_image container_data['image'] do
+    action :pull
     tag container_data['tag']
-    notifies :create, "file[#{cur}/id]"
+    notifies :redeploy, "docker_container[#{application}]"
 
     only_if {
       opsworks['activity'] == 'setup' || opsworks['activity'] == 'deploy'
     }
   end
 
-  file "#{cur}/id" do
-    user deploy['user']
-    group deploy['group']
-    content lazy {
-      Chef::Mixin::ShellOut.shell_out("docker inspect -f '{{.Id}}' #{container_data['image']}:#{container_data['tag']}", :timeout => 60).stdout
-    }
-
-    if opsworks['activity'] == 'setup' || opsworks['activity'] == 'deploy'
-      notifies :redeploy, "docker_container[#{application}]"
-    end
-  end
-
+  # we want to redeploy when the environment has been changed
   template "#{cur}/env" do
     user deploy['user']
     group deploy['group']
@@ -70,7 +61,7 @@ define :docker_deploy do
     variables :env => deploy['environment']
     cookbook 'docker_deploy'
 
-    if opsworks['action'] == 'setup' || opsworks['action'] == 'deploy'
+    if opsworks['activity'] == 'setup' || opsworks['activity'] == 'deploy'
       notifies :redeploy, "docker_container[#{application}]"
     end
   end
@@ -83,6 +74,7 @@ define :docker_deploy do
       backup false
       action :create
       content deploy['ssl_certificate']
+      notifies :redeploy, "docker_container[#{application}]"
     end
 
     file "#{cur}/cert.key" do
@@ -92,41 +84,47 @@ define :docker_deploy do
       backup false
       action :create
       content deploy['ssl_certificate_key']
+      notifies :redeploy, "docker_container[#{application}]"
     end
   end
 
   docker_container application do
-    image lazy { ::File.open("#{cur}/id") { |f| f.read.strip } }
-    container_name application
+    image container_data['image']
+    tag container_data['tag']
 
     case opsworks['activity']
     when 'setup', 'deploy'
-      action [:redeploy, :run]
+      action [:run_if_missing]
     when 'undeploy'
       action [:stop, :remove]
     end
 
     detach true
-    env_file "#{cur}/env"
+
     if container_data['cmd']
       command container_data['cmd']
     end
 
     if container_data['net']
-      net container_data['net']
+      network_mode container_data['net']
     end
 
     if container_data['link']
-      link container_data['link']
+      links [container_data['link']]
     end
 
+    docker_env = []
+
     if deploy['ssl_support']
-      ENV['TLS_CERT'] = deploy['ssl_certificate']
-      ENV['TLS_CERT_KEY'] = deploy['ssl_certificate_key']
-      env %w{
-        TLS_CERT
-        TLS_CERT_KEY
-      }
+      docker_env << "TLS_CERT=#{deploy['ssl_certificate']}"
+      docker_env << "TLS_CERT_KEY=#{deploy['ssl_certificate_key']}"
     end
+
+    deploy['environment'].each do |k, v|
+      docker_env << "#{k}=#{v}"
+    end
+
+    env docker_env
+
   end
 end

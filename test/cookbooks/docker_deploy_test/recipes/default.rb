@@ -18,8 +18,8 @@
 
 include_recipe 'deploy'
 
-docker_deploy 'nginx' do
-  deploy_data node['deploy']['nginx']
+docker_deploy 'api' do
+  deploy_data node['deploy']['api']
   opsworks_data node['opsworks']
   container_data node['docker_deploy_test']['docker']
 end
