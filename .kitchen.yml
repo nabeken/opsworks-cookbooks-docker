@@ -24,12 +24,9 @@ platforms:
     run_list:
       - recipe[apt]
       - recipe[docker_deploy_test::install_docker]
-      - recipe[golang]
     driver:
       image_id: ami-fc11d4fc
     attributes:
-      go:
-        version: 1.4.2
       opsworks:
         instance:
           infrastructure_class: ec2
