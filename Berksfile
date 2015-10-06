@@ -28,7 +28,7 @@ if ENV['NO_OPSWORKS']
   end
 
   group :integration do
-    cookbook 'golang', '~> 1.5.0'
+    cookbook 'td-agent'
     cookbook 'docker_deploy_test', :path => './test/cookbooks/docker_deploy_test'
   end
 end

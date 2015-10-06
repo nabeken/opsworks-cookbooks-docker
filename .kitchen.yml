@@ -35,6 +35,7 @@ platforms:
 suites:
   - name: default
     run_list:
+      - recipe[td-agent]
       - recipe[docker_deploy_test]
     attributes:
       docker_deploy_test:
@@ -43,6 +44,9 @@ suites:
           tag: latest
           net: host
           cmd: app
+          log_driver: fluentd
+          log_opts:
+            - 'fluentd-tag=docker.{{.Name}}.{{.ID}}'
       deploy:
         api:
           application: api

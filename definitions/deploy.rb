@@ -101,8 +101,12 @@ define :docker_deploy do
 
     detach true
 
-    if container_data['logopts']
-      log_opts container_data['logopts']
+    if container_data['log_driver']
+      log_driver container_data['log_driver']
+    end
+
+    if container_data['log_opts']
+      log_opts container_data['log_opts']
     end
 
     if container_data['cmd']

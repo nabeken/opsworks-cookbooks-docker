@@ -7,6 +7,9 @@ end
 describe docker_container('api') do
   its(['Path']) { should eq 'app' }
 
+  its(['.HostConfig.LogConfig.Type']) { should eq 'fluentd' }
+  its(['.HostConfig.LogConfig.Config']) { should include({'fluentd-tag' => 'docker.{{.Name}}.{{.ID}}' }) }
+
   %w{
     PORT=80
     TEST_ENV=HOGE
