@@ -101,6 +101,10 @@ define :docker_deploy do
 
     detach true
 
+    if container_data['logopts']
+      log_opts container_data['logopts']
+    end
+
     if container_data['cmd']
       command container_data['cmd']
     end
