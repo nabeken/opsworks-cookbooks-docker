@@ -16,10 +16,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-include_recipe 'deploy'
-
 docker_deploy 'api' do
   deploy_data node['deploy']['api']
-  opsworks_data node['opsworks']
   container_data node['docker_deploy_test']['docker']
 end
+
+#docker_undeploy 'api'
