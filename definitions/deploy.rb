@@ -116,11 +116,3 @@ define :docker_deploy do
     env docker_env
   end
 end
-
-define :docker_undeploy do
-  application = params[:name]
-
-  docker_container application do
-    action [:delete]
-  end
-end
