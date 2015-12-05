@@ -26,11 +26,6 @@ platforms:
       - recipe[docker_deploy_test::install_docker]
     driver:
       image_id: ami-fc11d4fc
-    attributes:
-      opsworks:
-        instance:
-          infrastructure_class: ec2
-        activity: setup
 
 suites:
   - name: default
@@ -49,6 +44,4 @@ suites:
           application_type: other
           environment:
             PORT: 80
-            TEST_ENV: HOGE
-            TEST_ENV_2: HOGE_2
-            TEST_ENV_3: HOGE_3
+            TEST_ENV_HOGE: HOGE
