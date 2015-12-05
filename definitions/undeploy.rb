@@ -1,6 +1,5 @@
 #
-# Cookbook Name:: docker_deploy_test
-# Recipe:: default
+# Cookbook Name:: docker_deploy
 #
 # Copyright 2015 TANABE Ken-ichi
 # 
@@ -16,9 +15,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-docker_deploy 'api' do
-  deploy_data node['deploy']['api']
-  container_data node['docker_deploy_test']['docker']
-end
+define :docker_undeploy do
+  application = params[:name]
 
-#docker_undeploy 'api'
+  docker_container application do
+    action [:delete]
+  end
+end

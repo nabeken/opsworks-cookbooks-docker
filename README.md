@@ -1,5 +1,7 @@
 # docker_deploy
 
+This cookbook works with `Chef 12 Stack`.
+
 ## Running test-kitchen
 
 Strongly recommend you to install chefdk.

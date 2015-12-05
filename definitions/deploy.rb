@@ -21,69 +21,63 @@ extend Chef::Mixin::ShellOut
 define :docker_deploy do
   application = params[:name]
   deploy = params[:deploy_data]
-  opsworks = params[:opsworks_data]
-
   container_data = params[:container_data]
 
-  Chef::Log.info "Start deploying #{application} in #{opsworks['activity']} phase..."
+  deploy_user = deploy['user'] || 'root'
+  deploy_group = deploy['group'] || 'root'
 
-  opsworks_deploy_dir do
-    user deploy['user']
-    group deploy['group']
-    path "/srv/www/#{application}"
+  Chef::Log.info "Start deploying docker container for #{application}"
+
+  %W{
+    /srv/container
+    /srv/container/#{application}
+    /srv/container/#{application}/current
+  }.each do |d|
+    directory d do
+      user deploy_user
+      group deploy_group
+    end
   end
 
-  cur = "/srv/www/#{application}/current"
-
-  directory cur do
-    user deploy['user']
-    group deploy['group']
-  end
+  cur = "/srv/container/#{application}/current"
 
   docker_image container_data['image'] do
     action :pull
     tag container_data['tag']
     notifies :redeploy, "docker_container[#{application}]"
-
-    only_if {
-      opsworks['activity'] == 'setup' || opsworks['activity'] == 'deploy'
-    }
   end
 
   # we want to redeploy when the environment has been changed
   template "#{cur}/env" do
-    user deploy['user']
-    group deploy['group']
+    user deploy_user
+    group deploy_group
     mode '0600'
     action :create
     backup false
     source 'envfile.erb'
     variables :env => deploy['environment']
     cookbook 'docker_deploy'
-
-    if opsworks['activity'] == 'setup' || opsworks['activity'] == 'deploy'
-      notifies :redeploy, "docker_container[#{application}]"
-    end
+    notifies :redeploy, "docker_container[#{application}]"
   end
 
-  if deploy['ssl_support']
+  if deploy['enable_ssl']
     file "#{cur}/cert.pem" do
-      user deploy['user']
-      group deploy['group']
+      user deploy_user
+      group deploy_group
       mode '0600'
       backup false
       action :create
-      content deploy['ssl_certificate']
+      content deploy['ssl_configuration']['certificate']
       notifies :redeploy, "docker_container[#{application}]"
     end
 
     file "#{cur}/cert.key" do
-      user deploy['user']
-      group deploy['group']
+      user deploy_user
+      group deploy_group
       mode '0600'
       backup false
       action :create
-      content deploy['ssl_certificate_key']
+      content deploy['ssl_configuration']['private_key']
       notifies :redeploy, "docker_container[#{application}]"
     end
   end
@@ -92,12 +86,7 @@ define :docker_deploy do
     image container_data['image']
     tag container_data['tag']
 
-    case opsworks['activity']
-    when 'setup', 'deploy'
-      action [:run_if_missing]
-    when 'undeploy'
-      action [:stop, :remove]
-    end
+    action [:run_if_missing]
 
     detach true
 
@@ -133,6 +122,5 @@ define :docker_deploy do
     end
 
     env docker_env
-
   end
 end
