@@ -22,6 +22,7 @@ define :docker_deploy do
   application = params[:name]
   deploy = params[:deploy_data]
   container_data = params[:container_data]
+  pull = params[:pull] || true
 
   deploy_user = deploy['user'] || 'root'
   deploy_group = deploy['group'] || 'root'
@@ -44,7 +45,9 @@ define :docker_deploy do
   docker_image container_data['image'] do
     action :pull
     tag container_data['tag']
-    notifies :redeploy, "docker_container[#{application}]"
+    notifies :redeploy, "docker_container[#{application}]", :delayed
+
+    only_if { pull }
   end
 
   # we want to redeploy when the environment has been changed
