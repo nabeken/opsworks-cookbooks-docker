@@ -57,7 +57,7 @@ define :docker_deploy do
     source 'envfile.erb'
     variables :env => deploy['environment']
     cookbook 'docker_deploy'
-    notifies :redeploy, "docker_container[#{application}]"
+    notifies :redeploy, "docker_container[#{application}]", :delayed
   end
 
   if deploy['enable_ssl']
@@ -68,7 +68,7 @@ define :docker_deploy do
       backup false
       action :create
       content deploy['ssl_configuration']['certificate']
-      notifies :redeploy, "docker_container[#{application}]"
+      notifies :redeploy, "docker_container[#{application}]", :delayed
     end
 
     file "#{cur}/cert.key" do
@@ -78,7 +78,7 @@ define :docker_deploy do
       backup false
       action :create
       content deploy['ssl_configuration']['private_key']
-      notifies :redeploy, "docker_container[#{application}]"
+      notifies :redeploy, "docker_container[#{application}]", :delayed
     end
   end
 
