@@ -22,7 +22,11 @@ define :docker_deploy do
   application = params[:name]
   deploy = params[:deploy_data]
   container_data = params[:container_data]
-  pull = params[:pull]
+  pull = if params[:pull].nil?
+           true
+         else
+           params[:pull]
+         end
 
   deploy_user = deploy['user'] || 'root'
   deploy_group = deploy['group'] || 'root'
