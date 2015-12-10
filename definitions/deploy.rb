@@ -112,9 +112,9 @@ define :docker_deploy do
 
     docker_env = []
 
-    if deploy['ssl_support']
-      docker_env << "TLS_CERT=#{deploy['ssl_certificate']}"
-      docker_env << "TLS_CERT_KEY=#{deploy['ssl_certificate_key']}"
+    if deploy['enable_ssl']
+      docker_env << "TLS_CERT=#{deploy['ssl_configuration']['certificate']}"
+      docker_env << "TLS_CERT_KEY=#{deploy['ssl_configuration']['private_key']}"
     end
 
     deploy['environment'].each do |k, v|
