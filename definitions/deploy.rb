@@ -86,7 +86,7 @@ define :docker_deploy do
     image container_data['image']
     tag container_data['tag']
 
-    action [:run_if_missing]
+    action [:redeploy]
 
     detach true
 
