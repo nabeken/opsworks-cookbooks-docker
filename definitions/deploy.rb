@@ -42,12 +42,12 @@ define :docker_deploy do
 
   cur = "/srv/container/#{application}/current"
 
-  docker_image container_data['image'] do
-    action :pull
-    tag container_data['tag']
-    notifies :redeploy, "docker_container[#{application}]", :delayed
-
-    only_if { pull }
+  if pull
+    docker_image container_data['image'] do
+      action :pull
+      tag container_data['tag']
+      notifies :redeploy, "docker_container[#{application}]", :delayed
+    end
   end
 
   # we want to redeploy when the environment has been changed
